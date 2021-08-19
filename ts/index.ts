@@ -1,20 +1,13 @@
 import p5 from 'p5/lib/p5.min'
+import con1 from './con1'
 
-// let audio;
-// let fft;
-const bgColor = '#0c0f27'
-const bassColor = ['#313e9b', '#1200b3']
-const midColor = '#da1500'
-const trembleColor = '#728d0d'
-let pieces
-let radius
+const bgColor = '#000000'
 
-let audio = null
-let audioSource = null
-let intervalId = null
+let audio: HTMLAudioElement = null
+let audioSource: MediaElementAudioSourceNode = null
 let spectrumArray = new Uint8Array()
 let analyzerNode: AnalyserNode = null
-let gainNode = null
+let gainNode: GainNode = null
 let bass: BiquadFilterNode = null
 let middle: BiquadFilterNode = null
 let treble: BiquadFilterNode = null
@@ -22,15 +15,15 @@ let bassArray = new Uint8Array()
 let middleArray = new Uint8Array()
 let trebleArray = new Uint8Array()
 
-const height = 850
-const width = 850
+const height = 500
+const width = 500
 
 const volumeControl = document.getElementById('volume') as HTMLInputElement
 
 volumeControl.addEventListener(
   'input',
   () => {
-    gainNode.gain.value = volumeControl.value
+    gainNode.gain.value = +volumeControl.value
   },
   false
 )
@@ -54,10 +47,6 @@ fileInput.addEventListener('change', async (event) => {
 
   if (audioSource) {
     audioSource.disconnect()
-  }
-
-  if (intervalId) {
-    clearInterval(intervalId)
   }
 
   analyzerNode.fftSize = 512 * 2
@@ -87,12 +76,12 @@ fileInput.addEventListener('change', async (event) => {
   }
 })
 
-async function convertAudioFileToDataUrl(file: Blob) {
+async function convertAudioFileToDataUrl(file: Blob): Promise<string> {
   const reader = new FileReader()
 
-  const loadPromise = new Promise((resolve) => {
+  const loadPromise: Promise<string> = new Promise((resolve) => {
     reader.onload = (event) => {
-      resolve(event.target.result)
+      resolve(event.target.result as string)
     }
   })
 
@@ -101,11 +90,21 @@ async function convertAudioFileToDataUrl(file: Blob) {
   return loadPromise
 }
 
-const sketch = (p: p5) => {
+function rBTM() {
+  analyzerNode.getByteFrequencyData(spectrumArray)
+  analyzerNode.getByteFrequencyData(bassArray)
+  analyzerNode.getByteFrequencyData(middleArray)
+  analyzerNode.getByteFrequencyData(trebleArray)
+  const bass = bassArray[Math.floor((500 * 1024) / 44100)]
+  const mid = middleArray[Math.floor((1000 * 1024) / 44100)]
+  const treble = trebleArray[Math.floor((2000 * 1024) / 44100)]
+
+  return [bass, treble, mid]
+}
+
+const sketch1 = (p: p5) => {
   p.setup = () => {
     p.createCanvas(width, height)
-    pieces = 30
-    radius = height / 4
   }
 
   p.draw = () => {
@@ -113,63 +112,8 @@ const sketch = (p: p5) => {
     p.strokeWeight(1)
 
     if (analyzerNode) {
-      analyzerNode.getByteFrequencyData(spectrumArray)
-      analyzerNode.getByteFrequencyData(bassArray)
-      analyzerNode.getByteFrequencyData(middleArray)
-      analyzerNode.getByteFrequencyData(trebleArray)
-      const bass = bassArray[Math.floor((500 * 1024) / 44100)]
-      const treble = trebleArray[Math.floor((2000 * 1024) / 44100)]
-      const mid = middleArray[Math.floor((1000 * 1024) / 44100)]
-
-      const mapMid = p.map(mid, 0, 255, -radius, radius)
-      const scaleMid = p.map(mid, 0, 255, 1, 1.5)
-
-      const mapTreble = p.map(treble, 0, 255, -radius / 2, radius * 2)
-      const scaleTreble = p.map(treble, 0, 255, 0.5, 2)
-
-      const mapbass = p.map(bass, 0, 255, 0, 200)
-      const scalebass = p.map(bass, 0, 255, 0, 0.8)
-
-      pieces = 9
-      radius = 200
-
-      p.translate(width / 2, height / 2)
-
-      for (let i = 0; i < pieces; i += 1) {
-        p.rotate(p.TWO_PI / pieces)
-
-        p.noFill()
-
-        /*----------  BASS  ----------*/
-        p.push()
-        p.strokeWeight(8)
-        p.stroke(bassColor[0])
-        p.scale(scalebass + 1)
-        p.rotate(-p.frameCount * 0.05)
-        p.point(mapbass, radius / 2)
-        p.stroke(bassColor[1])
-        p.strokeWeight(2.2)
-        p.line(200, 200, radius, radius)
-        p.pop()
-
-        /*----------  MID  ----------*/
-        p.push()
-        p.stroke(midColor)
-        p.strokeWeight(4)
-        p.rotate(-p.frameCount * 0.01)
-        p.point(mapMid, radius)
-        p.pop()
-
-        /*----------  TREMBLE  ----------*/
-        p.push()
-        p.stroke(trembleColor)
-        p.strokeWeight(4)
-        p.scale(scaleTreble)
-        p.rotate(p.frameCount * 0.01)
-        p.point(-100, radius / 2)
-        p.point(100, radius / 2)
-        p.pop()
-      }
+      const [bass, treble, mid] = rBTM()
+      con1(p, width, height, bass, treble, mid)
     }
   }
 
@@ -178,4 +122,4 @@ const sketch = (p: p5) => {
   }
 }
 
-new p5(sketch, 'con1')
+new p5(sketch1, 'con1')
