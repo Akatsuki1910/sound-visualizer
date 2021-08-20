@@ -1,5 +1,6 @@
 import p5 from 'p5/lib/p5.min'
 import con1 from './con1'
+import con2 from './con2'
 
 const bgColor = '#000000'
 
@@ -33,6 +34,7 @@ fileInput.addEventListener('change', async (event) => {
   const audioContext = new AudioContext()
   analyzerNode = audioContext.createAnalyser()
   gainNode = audioContext.createGain()
+  gainNode.gain.value = -3
   bass = audioContext.createBiquadFilter() //  500 Hz
   middle = audioContext.createBiquadFilter() // 1000 Hz
   treble = audioContext.createBiquadFilter() // 2000 Hz
@@ -123,3 +125,25 @@ const sketch1 = (p: p5) => {
 }
 
 new p5(sketch1, 'con1')
+
+const sketch2 = (p: p5) => {
+  p.setup = () => {
+    p.createCanvas(width, height)
+  }
+
+  p.draw = () => {
+    p.background(bgColor)
+    p.strokeWeight(1)
+
+    if (analyzerNode) {
+      const [bass, treble, mid] = rBTM()
+      con2(p, width, height, bass, treble, mid)
+    }
+  }
+
+  p.windowResized = () => {
+    p.resizeCanvas(width, height)
+  }
+}
+
+new p5(sketch2, 'con2')
