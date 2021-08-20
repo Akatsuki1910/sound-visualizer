@@ -1,6 +1,7 @@
 import p5 from 'p5/lib/p5.min'
 import con1 from './con1'
 import con2 from './con2'
+import con3 from './con3'
 
 const bgColor = '#000000'
 
@@ -147,3 +148,25 @@ const sketch2 = (p: p5) => {
 }
 
 new p5(sketch2, 'con2')
+
+const sketch3 = (p: p5) => {
+  p.setup = () => {
+    p.createCanvas(width, height)
+  }
+
+  p.draw = () => {
+    p.background(bgColor)
+    p.strokeWeight(1)
+
+    if (analyzerNode) {
+      const [bass, treble, mid] = rBTM()
+      con3(p, width, height, bass, treble, mid, spectrumArray)
+    }
+  }
+
+  p.windowResized = () => {
+    p.resizeCanvas(width, height)
+  }
+}
+
+new p5(sketch3, 'con3')
